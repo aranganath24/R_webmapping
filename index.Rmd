@@ -1,0 +1,94 @@
+---
+title: "Basic Interactive Webmapping in R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This document provides a basic outline of how to make a web map in R using some established packages. 
+
+## Load the required packages
+
+Load (and if you haven't, install) the "sf" and "tmap" packages. 
+
+```{r, results='false', message=FALSE}
+library(sf)
+library(tmap)
+```
+
+## Load in some spatial data
+
+We will load two spatial layers. The first is a polygon shapefile of Colorado's state border, which is available [here](https://geo.colorado.edu/catalog/47540-pf100p61s2w3); and the second is a point shapefile of trailheads in Colorado, available [here](https://geo.colorado.edu/catalog/47540-5caf8035c8a434000a5e7054). 
+
+The following code uses the "st_read" function in the sf package to load in the data; each shapefile is assigned to a distinct object. The CO state border shapefile is assigned to an object named "COborder", while the trailhead shapefile is assigned to an object named "COtrailheads". 
+
+```{r load data, results='hide'}
+co_border<-st_read("BLM_CO_ST_BNDY_20170109.shp")
+co_trailheads<-st_read("Trailheads_COTREX02192019.shp")
+```
+
+##Reproject your Data
+
+The coordinate reference system (CRS) of the files we read into R are not in WGS1984; however, web mapping applications assume that data is in this CRS (before reprojecting data to a Web Mercator projection). In order to reproject our datasets, we'll use the "st_transform" function. 
+
+```{r}
+co_border<-st_transform(co_border,4326)
+co_trailheads<-st_transform(co_trailheads,4326)
+```
+
+## Plot your data in an interactive leaflet map
+
+We will now plot three GIS layers in an interactive map using the tmap package. The first line of code sets tmap to an interactive setting, so that it will render an interactive map that draws on Leaflet (rather than a static plot). The second chunk of code overlays the points representing trailheads over the polygon shapefile of CO state boundaries; a basemap from Open Street Map is added in the final line:
+
+
+```{r}
+tmap_mode("view")
+
+tm_shape(co_border)+
+  tm_polygons()+
+tm_shape(co_trailheads)+
+  tm_dots()+
+tm_basemap(providers$OpenStreetMap)
+```
+
+Note that you can zoom in and out, and pan around the map, as desired; you can also click on individual points in the map, and information (from the attribute table) that is relevant to that particular trailhead will pop up. 
+
+You can also manipulate the appearance of your map using arguments in the tmap package's various functions. For instance, let's change our basemap to an ESRI imagery layer (since our points represent trailheads, it'll be nice to see them overlaid against features of the physical landscape); let's make our points a shade of azure; and let's make our CO polygon transparent, so that we can see our points juxtaposed against the imagery layer. To make sure the CO border stands out, let's make the border dark blue, and increase the line thickness (we set the line thickness using the "lwd" argument in the "tm_borders" function). For a useful guide to color options in the tmap package (and R more generally), see this handy [color cheatsheet](https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf).
+
+We'll assign the code that generates our map to an object (we'll call it "trailhead_webmap"), so that it can be easily called later in the workflow (if needed). Our code will appear as follows:
+
+```{r}
+trailhead_webmap<-tm_shape(co_border)+
+                      tm_fill(alpha=0)+
+                      tm_borders("blue1", lwd=2)+
+                  tm_shape(co_trailheads)+
+                      tm_dots("azure2")+
+                  tm_basemap(providers$Esri.WorldImagery)
+```
+
+And when we print the name of the object that contains this code, we can see what the resulting map looks like:
+
+```{r}
+trailhead_webmap
+```
+
+We can export this interactive map as an html file using the "tmap_save" function. Below, the first argument is the name of the object that we want to save; and the second argument is the name of the file that will be written to disk (unless otherwise specified, the file will be saved to your working directory):
+
+```{r,message=FALSE}
+tmap_save(trailhead_webmap,"trailhead_webmap.html")
+```
+
+This html file containing the map can be embedded in your website. This will require some knowledge of html; for some instructions on how to do this, see [here](https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Other_embedding_technologies). The html file containing the map could also be published on the web as a standalone page. 
+
+
+
+
+
+
+
+
+
