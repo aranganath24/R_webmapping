@@ -31,7 +31,7 @@ co_border<-st_read("BLM_CO_ST_BNDY_20170109.shp")
 co_trailheads<-st_read("Trailheads_COTREX02192019.shp")
 ```
 
-##Reproject your Data
+## Reproject your Data
 
 The coordinate reference system (CRS) of the files we read into R are not in WGS1984; however, web mapping applications assume that data is in this CRS (before reprojecting data to a Web Mercator projection). In order to reproject our datasets, we'll use the "st_transform" function. 
 
